@@ -25,7 +25,7 @@ params={
                   
   'col':{'subpop'  : {"exc","inh"}, 
          'scale'   : 1,
-         'size'    : 200,
+         'size'    : 2000,
          'EI_ratio': 4,
          #'model'   : EIF_cond_alpha_isfa_ista,
          'model': {'name': 'aeif_beuler', 'type': 'Native'},
@@ -39,7 +39,7 @@ params={
 
   'stim':{'type'     : "Poisson_E",
           'target'   : "EI", 
-          'N_E'      : 200,
+          'N_E'      : 250,
           'wE'       : 6e-4,
           'ee'       : 0.01,
           'ei'       : 0.01, 
@@ -61,9 +61,14 @@ params={
          'integ': "default"
         },
 
+<<<<<<< HEAD
+  'diag':{'N'         : 10,
+          'stim_rates':[200,8000],
+=======
   'diag':{'N'         : 3,
           'n_source'  : [20,200],  
           'stim_rates':[200,10000],
+>>>>>>> 8e263e5ee8a4f4b7b688b8d0a94ec4529a9b3496
           'wis'       :[1e-3,1e-2]
         }
 }

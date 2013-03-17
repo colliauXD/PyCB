@@ -47,7 +47,6 @@ def pw_pearson_corcoef(spks, nb_pairs=100, time_bin=5):
    m_cc=np.zeros(N2)
    
    for i in xrange(N2):
-     print len(spkf[i])
      if len(spkf[i])<np.sqrt(nb_pairs):
         m_cc[i]=0
      else:

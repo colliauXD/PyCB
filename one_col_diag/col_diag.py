@@ -422,7 +422,7 @@ def generic_launch_network(path,params,verbose=True):
 file_name="Big_col"
 path="Results/"+file_name
 params=cPickle.load(open(file_name+".par"))
-#generic_launch_network(path,params)
+generic_launch_network(path,params)
 s=mea.get_spikes(params["diag"]["N"], 0, 2000, path,"E")
 time_r=mea.get_t_rates(s, 5)
 mr,stdr=mea.get_rates_m_std(s,5)

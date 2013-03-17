@@ -61,8 +61,14 @@ params={
          'integ': "default"
         },
 
+<<<<<<< HEAD
   'diag':{'N'         : 10,
           'stim_rates':[200,8000],
+=======
+  'diag':{'N'         : 3,
+          'n_source'  : [20,200],  
+          'stim_rates':[200,10000],
+>>>>>>> 8e263e5ee8a4f4b7b688b8d0a94ec4529a9b3496
           'wis'       :[1e-3,1e-2]
         }
 }

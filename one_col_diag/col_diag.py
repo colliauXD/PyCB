@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+1# -*- coding: utf-8 -*-
 from myconnectors2 import *
 from NeuroTools.stgen import StGen
 import cPickle, time, gc
@@ -193,6 +193,23 @@ class Layer(object):
   def mpi_print(self, string):
     if simulator.state.mpi_rank == 0: print string  
 
+  def make_stim_pop(self, stimulus):
+     if (stimulus['type'] == 'Poisson_E'):
+        self.ext_stim = Population(stimulus['N_E'], native_cell_type('poisson_generator'), {'rate': stimulus['rate_E'], 'stop' : float(stimulus['duration'])})
+
+  def stim_n_sources(self, stimulus, idx, n_source):
+    if stimulus["target"]=="E":
+       N_target=self.Ne
+       target_cells=self.get_exc_from_blocks(idx)
+    if stimulus["target"]=="I":
+       N_target=self.Ni
+       target_cells=self.get_inh_from_blocks(idx)
+    if stimulus["target"]=="EI":
+       N_target=self.Ne+self.Ni
+       target_cells=self.get_all_from_blocks(idx)
+    conn    = MyConnector(numpy.repeat(stimulus['ee'],N_target), weights = stimulus['wE'], delays=self.timestep)
+    prj     = Projection(self.ext_stim.sample(n_source), target_cells, conn, target='excitatory', rng=rng)
+    
   def stimulate_on_target(self, stimulus, idx):
     if (stimulus['type'] == 'Poisson_E'):
       self.ext_stim = Population(stimulus['N_E'], native_cell_type('poisson_generator'), {'rate': stimulus['rate_E'], 'stop' : float(stimulus['duration'])})
@@ -398,14 +415,14 @@ def generic_launch_network(path,params,verbose=True):
   network = Layer(params["diag"]["N"], params['cell_params'],params['col'], params['sim'],le=0, li=0, velocity=None)
   
   #Stimulate with Poisson and setup internal connections
-  sr=numpy.linspace(params["diag"]["stim_rates"][0],params["diag"]["stim_rates"][1],params["diag"]["N"])
+  n_source=numpy.arange(params["diag"]["n_source"][0],params["diag"]["n_source"][1],step=(params["diag"]["n_source"][1]-params["diag"]["n_source"][0])/params["diag"]["N"],dtype=numpy.int)
+  network.make_stim_pop(params["stim"])
   wis=numpy.linspace(params["diag"]["wis"][0],params["diag"]["wis"][1],params["diag"]["N"])
   for idx in network._indices():
     print "Setting connections in column", idx
-    print "with stim rate",sr[idx[0]]
+    print "with", n_source[idx[0]], "sources"
     print "and internal inh conductance", wis[idx[1]]
-    params["stim"]["rate_E"]=sr[idx[0]]
-    network.stimulate_on_target(params['stim'],[idx])
+    network.stim_n_sources(params['stim'],[idx],n_source[idx[0]])
     params["col"]["wI"]=wis[idx[1]]
     r=network.connect_single_col(idx, params['col'])
     print "+->o"
@@ -418,11 +435,13 @@ def generic_launch_network(path,params,verbose=True):
   network.simulate(params['sim']['duration'], print_rates=True)
   network.save(path=path, gather=True)
   end()
-  
+
+    
 file_name="Big_col"
 path="Results/"+file_name
 params=cPickle.load(open(file_name+".par"))
-#generic_launch_network(path,params)
+generic_launch_network(path,params)
+
 s=mea.get_spikes(params["diag"]["N"], 0, 2000, path,"E")
 time_r=mea.get_t_rates(s, 5)
 mr,stdr=mea.get_rates_m_std(s,5)

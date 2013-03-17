@@ -62,6 +62,7 @@ params={
         },
 
   'diag':{'N'         : 3,
+          'n_source'  : [20,200],  
           'stim_rates':[200,10000],
           'wis'       :[1e-3,1e-2]
         }

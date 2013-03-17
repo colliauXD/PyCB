@@ -6,6 +6,8 @@ import numpy
 import pylab
 from pyNN.nest import *
 from pyNN.recording import files
+import measures as mea
+
 nest.Install("mymodule")
 
 
@@ -406,8 +408,8 @@ def generic_launch_network(path,params,verbose=True):
     network.stimulate_on_target(params['stim'],[idx])
     params["col"]["wI"]=wis[idx[1]]
     r=network.connect_single_col(idx, params['col'])
-    print "->o"
-    print "|_|",r, "(ee,ei,ie,ii) internal connections"
+    print "+->o"
+    print "|__|",r, "(ee,ei,ie,ii) internal connections"
   network.record('spikes_E', to_file=False)
   network.record('spikes_I', to_file=False)
   network.record('lfp', to_file=False)
@@ -416,17 +418,18 @@ def generic_launch_network(path,params,verbose=True):
   network.simulate(params['sim']['duration'], print_rates=True)
   network.save(path=path, gather=True)
   end()
-  #return network
-
+  
 file_name="Big_col"
 path="Results/"+file_name
 params=cPickle.load(open(file_name+".par"))
-generic_launch_network(path,params)
-
-#from NeuroTools.signals import *
-#from pylab import *
-#f=PyNNNumpyBinaryFile(path+"/1x1/E_Bloc_0_0.gdf")
-#sp=f.read_spikes({'t_stop': params["sim"]["duration"]})
-#numpy.savetxt(path+"/mr.npy",sp.firing_rate(5,average=True))
-#sp.raster_plot()
-#show()
+#generic_launch_network(path,params)
+s=mea.get_spikes(params["diag"]["N"], 0, 2000, path,"E")
+time_r=mea.get_t_rates(s, 5)
+mr,stdr=mea.get_rates_m_std(s,5)
+cv=mea.get_cvs(s)
+cc=mea.pw_pearson_corcoef(s, 100, 5)
+numpy.save(path+"_time_r",time_r)
+numpy.save(path+"_mr",mr)
+numpy.save(path+"_stdr",stdr)
+numpy.save(path+"_cv",cv)
+numpy.save(path+"_cc",cc)

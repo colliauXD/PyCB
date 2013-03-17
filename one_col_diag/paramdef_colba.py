@@ -25,7 +25,7 @@ params={
                   
   'col':{'subpop'  : {"exc","inh"}, 
          'scale'   : 1,
-         'size'    : 2000,
+         'size'    : 200,
          'EI_ratio': 4,
          #'model'   : EIF_cond_alpha_isfa_ista,
          'model': {'name': 'aeif_beuler', 'type': 'Native'},

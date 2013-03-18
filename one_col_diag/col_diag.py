@@ -437,7 +437,7 @@ def generic_launch_network(path,params,verbose=True):
   end()
 
     
-file_name="Big_col"
+file_name="1000_col"
 path="Results/"+file_name
 params=cPickle.load(open(file_name+".par"))
 generic_launch_network(path,params)

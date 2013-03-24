@@ -34,7 +34,7 @@ def get_rates_m_std(spikes, time_bin=10):
 
 def get_cvs(spks):
   spkf    = [s.id_slice(s.select_ids("len(cell) > 0")) for s in spks]
-  cvs=numpy.array([s.cv_isi(True) for s in spkf])
+  cvs=numpy.array([s.cv_isi(True).mean() for s in spkf])
   N=len(spkf)
   cvs  = cvs.reshape((numpy.sqrt(N), numpy.sqrt(N)))
   return cvs

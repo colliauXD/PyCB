@@ -1,15 +1,14 @@
-1# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 from myconnectors2 import *
 from NeuroTools.stgen import StGen
 import cPickle, time, gc
 import numpy 
-import pylab
 from pyNN.nest import *
 from pyNN.recording import files
 import measures as mea
+import graph_utils as gu
 
 nest.Install("mymodule")
-
 
 global  seed
 rng      = NumpyRNG(seed=249856, parallel_safe=False)
@@ -211,7 +210,7 @@ class Layer(object):
     prj     = Projection(self.ext_stim.sample(n_source), target_cells, conn, target='excitatory', rng=rng)
     
   def stimulate_on_target(self, stimulus, idx):
-    if (stimulus['type'] == 'Poisson_E'):
+    if (stimulus['type'] == 'Poisson_E' or stimulus['type'] == 'Poisson_EI'):
       self.ext_stim = Population(stimulus['N_E'], native_cell_type('poisson_generator'), {'rate': stimulus['rate_E'], 'stop' : float(stimulus['duration'])})
     #weight  = RandomDistribution('normal', (self.w_E, self.w_E/3), boundaries=(0, self.w_E*100), constrain='redraw', rng=rng)
 
@@ -372,6 +371,7 @@ class Layer(object):
      prjIE=Projection(self.blocs[idx].inh,self.blocs[idx].exc,MyConnector(numpy.repeat(col_params['ie'],self.Ne),weights=col_params['wI'],delays=self.timestep),target="inhibitory",rng=rng)
      prjII=Projection(self.blocs[idx].inh,self.blocs[idx].inh,MyConnector(numpy.repeat(col_params['ii'],self.Ni),weights=col_params['wI'],delays=self.timestep),target="inhibitory",rng=rng)
      return prjEE.size(), prjEI.size(), prjIE.size(), prjII.size()
+     #return prjEE.size()
 
   def is_in_range(self, position):
     x,y  = position 
@@ -415,14 +415,24 @@ def generic_launch_network(path,params,verbose=True):
   network = Layer(params["diag"]["N"], params['cell_params'],params['col'], params['sim'],le=0, li=0, velocity=None)
   
   #Stimulate with Poisson and setup internal connections
-  n_source=numpy.arange(params["diag"]["n_source"][0],params["diag"]["n_source"][1],step=(params["diag"]["n_source"][1]-params["diag"]["n_source"][0])/params["diag"]["N"],dtype=numpy.int)
+  #n_source=numpy.arange(params["diag"]["n_source"][0],params["diag"]["n_source"][1],step=(params["diag"]["n_source"][1]-params["diag"]["n_source"][0])/params["diag"]["N"],dtype=numpy.int)
+  sr=numpy.linspace( params["diag"]["stim_rates"][0],params["diag"]["stim_rates"][1],params["diag"]["N"])
   network.make_stim_pop(params["stim"])
   wis=numpy.linspace(params["diag"]["wis"][0],params["diag"]["wis"][1],params["diag"]["N"])
+  #As=numpy.linspace( params["diag"]["as"][0],params["diag"]["as"][1],params["diag"]["N"])
+  #Bs=numpy.linspace( params["diag"]["bs"][0],params["diag"]["bs"][1],params["diag"]["N"])
+
   for idx in network._indices():
     print "Setting connections in column", idx
-    print "with", n_source[idx[0]], "sources"
+    print "with", sr[idx[0]], "Hz sources"
     print "and internal inh conductance", wis[idx[1]]
-    network.stim_n_sources(params['stim'],[idx],n_source[idx[0]])
+    #network.stim_n_sources(params['stim'],[idx],n_source[idx[0]])
+    params["stim"]["rate_E"]=sr[idx[0]]
+    #params["cell_params"]["a"]=As[idx[1]]
+    #params["cell_params"]["b"]=Bs[idx[1]]
+    #set(network.get_exc_from_blocks([idx]),param={'a': params["cell_params"]["a"]})
+    #,'b': params["cell_params"]["b"]})
+    network.stimulate_on_target(params["stim"],[idx])
     params["col"]["wI"]=wis[idx[1]]
     r=network.connect_single_col(idx, params['col'])
     print "+->o"
@@ -437,18 +447,24 @@ def generic_launch_network(path,params,verbose=True):
   end()
 
     
-file_name="1000_col"
+file_name="col_stimE_wI"
 path="Results/"+file_name
 params=cPickle.load(open(file_name+".par"))
 generic_launch_network(path,params)
 
-s=mea.get_spikes(params["diag"]["N"], 0, 2000, path,"E")
+s=mea.get_spikes(params["diag"]["N"], 500, 10000, path,"E")
 time_r=mea.get_t_rates(s, 5)
 mr,stdr=mea.get_rates_m_std(s,5)
 cv=mea.get_cvs(s)
 cc=mea.pw_pearson_corcoef(s, 100, 5)
+
 numpy.save(path+"_time_r",time_r)
 numpy.save(path+"_mr",mr)
 numpy.save(path+"_stdr",stdr)
 numpy.save(path+"_cv",cv)
 numpy.save(path+"_cc",cc)
+
+gu.plot_mr(mr, params,path)
+gu.plot_stdr(stdr, params,path)
+gu.plot_cc(cc, params,path)
+gu.plot_cv(cv, params,path)
